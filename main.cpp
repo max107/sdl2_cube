@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include <SDL2/SDL_ttf.h>
 
 #include <iostream>
 #include <sstream>
@@ -28,7 +29,7 @@ float cameraAngleY = 0.f;
 float cameraDistance = 10.0f;
 
 static bool quitting = false;
-static SDL_Renderer *renderer;
+static TTF_Font *font;
 static SDL_Window *window = NULL;
 static SDL_GLContext gl_context;
 
@@ -72,7 +73,7 @@ void initGL() {
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
 
-    glClearColor(0, 0, 0, 0);                   // background color
+    glClearColor(.5f, .5f, .5f, .5f);                   // background color
     glClearStencil(0);                          // clear stencil buffer
     glClearDepth(1.0f);                         // 0 is near, 1 is far
     glDepthFunc(GL_LEQUAL);
@@ -83,10 +84,9 @@ void initGL() {
 ///////////////////////////////////////////////////////////////////////////////
 // set projection matrix as orthogonal
 ///////////////////////////////////////////////////////////////////////////////
-void toOrtho()
-{
+void toOrtho() {
     // set viewport to be the entire window
-    glViewport(0, 0, (GLsizei)SCREEN_WIDTH, (GLsizei)SCREEN_HEIGHT);
+    glViewport(0, 0, (GLsizei) SCREEN_WIDTH, (GLsizei) SCREEN_HEIGHT);
 
     // set orthographic viewing frustum
     glMatrixMode(GL_PROJECTION);
@@ -181,7 +181,9 @@ void showInfo() {
 
     float color[4] = {1, 1, 1, 1};
 
-    draw_text(renderer);
+//    glColor3f(255.0f, 255.0f, 255.0f);
+//    glTranslatef(10, 10, 0.0f);
+    draw_text(font);
 
     /*
     stringstream ss;
@@ -211,11 +213,11 @@ void showInfo() {
 
 void render() {
     // Clear the window
-//    SDL_RenderClear(renderer);
 
     toPerspective();
 
     SDL_GL_MakeCurrent(window, gl_context);
+
 
     // default example
     /*
@@ -254,9 +256,6 @@ void render() {
     glPopMatrix();
 
     SDL_GL_SwapWindow(window);
-
-    // Render the changes above
-//    SDL_RenderPresent(renderer);
 }
 
 int SDLCALL
@@ -309,6 +308,19 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    if (TTF_Init() == -1) {
+        std::cout << "Init TTF  failt : " << SDL_GetError() << std::endl;
+        return -1;
+    }
+
+    //this opens a font style and sets a size
+    font = TTF_OpenFont("Ubuntu-R.ttf", 16);
+    // Error check
+    if (font == nullptr) {
+        std::cout << " Failed to load font : " << SDL_GetError() << std::endl;
+        return false;
+    }
+
     window = SDL_CreateWindow("title", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT,
                               SDL_WINDOW_OPENGL);
     gl_context = SDL_GL_CreateContext(window);
@@ -324,24 +336,6 @@ int main(int argc, char *argv[]) {
     // The constants are defined in glext.h
     glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
     glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &maxIndices);
-
-    bool vsync = false; // TODO use settings
-    unsigned int renderMods = 0;
-    if (vsync) {
-        renderMods = SDL_RENDERER_PRESENTVSYNC;
-    }
-    renderer = SDL_CreateRenderer(window, -1, renderMods);
-    if (renderer == nullptr) {
-        std::cout << "Failed to create renderer : " << SDL_GetError();
-        return false;
-    }
-
-    // Set size of renderer to the same as window
-    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-    // Make our background black
-    glClearColor(0.5, 0.5, 0.5, 1.0);
-    // Set color of renderer to red
-    SDL_SetRenderDrawColor(renderer, 155, 155, 155, 255);
 
     while (!quitting) {
         SDL_Event event;

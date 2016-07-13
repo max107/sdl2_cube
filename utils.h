@@ -5,32 +5,59 @@
 #ifndef SDL2_CUBE_UTILS_H
 #define SDL2_CUBE_UTILS_H
 
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_opengl.h>
 
-void draw_text(SDL_Renderer * renderer) {
-    //this opens a font style and sets a size
-    TTF_Font* Sans = TTF_OpenFont("Ubuntu-R.ttf", 24);
-
+void draw_text(TTF_Font *font) {
     // this is the color in rgb format, maxing out all would give you the color white, and it will be your text's color
     SDL_Color White = {255, 255, 255};
 
     // as TTF_RenderText_Solid could only be used on SDL_Surface then you have to create the surface first
-    SDL_Surface* surfaceMessage = TTF_RenderText_Solid(Sans, "put your text here", White);
+    SDL_Surface *surfaceMessage = TTF_RenderText_Blended(font, "put your text here", White);
 
-    //now you can convert it into a texture
-    SDL_Texture* Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+    int w = 0;
+    int h = 0;
 
-    SDL_Rect Message_rect; //create a rect
-    Message_rect.x = 10;  //controls the rect's x coordinate
-    Message_rect.y = 10; // controls the rect's y coordinte
-    Message_rect.w = 100; // controls the width of the rect
-    Message_rect.h = 100; // controls the height of the rect
+    if (TTF_SizeText(font, "SDL_ttf is awesome!", &w, &h) == -1) {
+        std::cout << "Font size error: " << SDL_GetError() << std::endl;
+    }
 
-    //Mind you that (0,0) is on the top left of the window/screen, think a rect as the text's box, that way it would be very simple to understance
-    //Now since it's a texture, you have to put RenderCopy in your game loop area, the area where the whole code executes
+    GLuint texture_id;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surfaceMessage->w, surfaceMessage->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, surfaceMessage->pixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    SDL_FreeSurface(surfaceMessage);
 
-    //you put the renderer's name first, the Message, the crop size(you can ignore this if you don't want to dabble with cropping), and the rect which is the size and coordinate of your texture
-    SDL_RenderCopy(renderer, Message, NULL, &Message_rect);
+    glEnable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    //texcoord; position;
+    glVertexAttrib2f(1, 0, 1); glVertexAttrib2f(0, -1, -1); //top left
+    glVertexAttrib2f(1, 1, 1); glVertexAttrib2f(0, +1, -1); //top right
+    glVertexAttrib2f(1, 0, 0); glVertexAttrib2f(0, -1, +1); //bottom left
+    glVertexAttrib2f(1, 1, 0); glVertexAttrib2f(0, +1, +1); //bottom right
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    // TTF_CloseFont(font);
+}
+
+// Convert an SDL_Surface to SDL_Texture. We've done this before, so I'll keep it short
+SDL_Texture *SurfaceToTexture(SDL_Renderer *renderer, SDL_Surface *surf) {
+    SDL_Texture *text;
+
+    text = SDL_CreateTextureFromSurface(renderer, surf);
+
+    SDL_FreeSurface(surf);
+
+    return text;
 }
 
 #endif //SDL2_CUBE_UTILS_H
