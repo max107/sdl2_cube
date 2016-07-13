@@ -1,11 +1,3 @@
-#ifdef __APPLE__
-
-#include <GLUT/glut.h>
-
-#else
-#include <GL/glut.h>
-#endif
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
@@ -15,6 +7,7 @@
 
 #include "opengl_utils.h"
 #include "cube.h"
+#include "utils.h"
 
 using std::stringstream;
 using std::cout;
@@ -22,7 +15,7 @@ using std::endl;
 using std::ends;
 
 // global variables
-void *font = GLUT_BITMAP_8_BY_13;
+//void *font = GLUT_BITMAP_8_BY_13;
 
 const int SCREEN_WIDTH = 400;
 const int SCREEN_HEIGHT = 300;
@@ -35,6 +28,7 @@ float cameraAngleY = 0.f;
 float cameraDistance = 10.0f;
 
 static bool quitting = false;
+static SDL_Renderer *renderer;
 static SDL_Window *window = NULL;
 static SDL_GLContext gl_context;
 
@@ -87,6 +81,24 @@ void initGL() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// set projection matrix as orthogonal
+///////////////////////////////////////////////////////////////////////////////
+void toOrtho()
+{
+    // set viewport to be the entire window
+    glViewport(0, 0, (GLsizei)SCREEN_WIDTH, (GLsizei)SCREEN_HEIGHT);
+
+    // set orthographic viewing frustum
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -1, 1);
+
+    // switch to modelview matrix in order to set scene
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // set the projection matrix as perspective
 ///////////////////////////////////////////////////////////////////////////////
 void toPerspective() {
@@ -96,7 +108,8 @@ void toPerspective() {
     // set perspective viewing frustum
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(60.0f, (float) (SCREEN_WIDTH) / SCREEN_HEIGHT, 1.0f, 1000.0f); // FOV, AspectRatio, NearClip, FarClip
+    GLfloat ratio = static_cast<float>(SCREEN_WIDTH) / SCREEN_HEIGHT;
+    glFrustum(-ratio, ratio, -1.f, 1.f, 1.f, 1500.f); // 1500.f
 
     // switch to modelview matrix in order to set scene
     glMatrixMode(GL_MODELVIEW);
@@ -117,7 +130,7 @@ void drawString(const char *str, int x, int y, float color[4], void *font) {
 
     // loop all characters in the string
     while (*str) {
-        glutBitmapCharacter(font, *str);
+        // glutBitmapCharacter(font, *str);
         ++str;
     }
 
@@ -140,7 +153,7 @@ void drawString3D(const char *str, float pos[3], float color[4], void *font) {
 
     // loop all characters in the string
     while (*str) {
-        glutBitmapCharacter(font, *str);
+        // glutBitmapCharacter(font, *str);
         ++str;
     }
 
@@ -164,10 +177,13 @@ void showInfo() {
     glMatrixMode(GL_PROJECTION);        // switch to projection matrix
     glPushMatrix();                     // save current projection matrix
     glLoadIdentity();                   // reset projection matrix
-    gluOrtho2D(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT); // set to orthogonal projection
+    glOrtho(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -1, 1); // set to orthogonal projection
 
     float color[4] = {1, 1, 1, 1};
 
+    draw_text(renderer);
+
+    /*
     stringstream ss;
     ss << std::fixed << std::setprecision(3);
 
@@ -183,6 +199,7 @@ void showInfo() {
 
     // unset floating format
     ss << std::resetiosflags(std::ios_base::fixed | std::ios_base::floatfield);
+    */
 
     // restore projection matrix
     glPopMatrix();                   // restore to previous projection matrix
@@ -193,6 +210,9 @@ void showInfo() {
 }
 
 void render() {
+    // Clear the window
+//    SDL_RenderClear(renderer);
+
     toPerspective();
 
     SDL_GL_MakeCurrent(window, gl_context);
@@ -221,19 +241,22 @@ void render() {
     draw_cube(0, 0, 0);
 
     // print 2D text
+    /*
     float pos[4] = {-4.0f, 3.5f, 0, 1};
     float color[4] = {1, 1, 1, 1};
     pos[0] = -5.0f;
     pos[1] = -4.0f;
     drawString3D("glDrawElements()", pos, color, font);
+    */
 
     showInfo();     // print max range of glDrawRangeElements
 
     glPopMatrix();
 
-    glutSwapBuffers();
-
     SDL_GL_SwapWindow(window);
+
+    // Render the changes above
+//    SDL_RenderPresent(renderer);
 }
 
 int SDLCALL
@@ -302,8 +325,23 @@ int main(int argc, char *argv[]) {
     glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
     glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &maxIndices);
 
-    int x, y;
-    bool first = true;
+    bool vsync = false; // TODO use settings
+    unsigned int renderMods = 0;
+    if (vsync) {
+        renderMods = SDL_RENDERER_PRESENTVSYNC;
+    }
+    renderer = SDL_CreateRenderer(window, -1, renderMods);
+    if (renderer == nullptr) {
+        std::cout << "Failed to create renderer : " << SDL_GetError();
+        return false;
+    }
+
+    // Set size of renderer to the same as window
+    SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+    // Make our background black
+    glClearColor(0.5, 0.5, 0.5, 1.0);
+    // Set color of renderer to red
+    SDL_SetRenderDrawColor(renderer, 155, 155, 155, 255);
 
     while (!quitting) {
         SDL_Event event;
@@ -322,9 +360,6 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-
-        x = event.button.x;
-        y = event.button.y;
 
         int xrel, yrel;
         SDL_GetRelativeMouseState(&xrel, &yrel);
