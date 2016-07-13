@@ -13,6 +13,9 @@
 #include <sstream>
 #include <iomanip>
 
+#include "opengl_utils.h"
+#include "cube.h"
+
 using std::stringstream;
 using std::cout;
 using std::endl;
@@ -34,80 +37,6 @@ float cameraDistance = 10.0f;
 static bool quitting = false;
 static SDL_Window *window = NULL;
 static SDL_GLContext gl_context;
-
-// index array of vertex array for glDrawElements() & glDrawRangeElement()
-GLubyte indices[] = {0, 1, 2, 2, 3, 0,      // front
-                     4, 5, 6, 6, 7, 4,      // right
-                     8, 9, 10, 10, 11, 8,      // top
-                     12, 13, 14, 14, 15, 12,      // left
-                     16, 17, 18, 18, 19, 16,      // bottom
-                     20, 21, 22, 22, 23, 20};    // back
-
-// interleaved vertex array for glDrawElements() & glDrawRangeElements() ======
-// All vertex attributes (position, normal, color) are packed together as a
-// struct or set, for example, ((V,N,C), (V,N,C), (V,N,C),...).
-// It is called an array of struct, and provides better memory locality.
-GLfloat vertices3[] = {1, 1, 1, 0, 0, 1, 1, 1, 1,              // v0 (front)
-                       -1, 1, 1, 0, 0, 1, 1, 1, 0,              // v1
-                       -1, -1, 1, 0, 0, 1, 1, 0, 0,              // v2
-                       1, -1, 1, 0, 0, 1, 1, 0, 1,              // v3
-
-                       1, 1, 1, 1, 0, 0, 1, 1, 1,              // v0 (right)
-                       1, -1, 1, 1, 0, 0, 1, 0, 1,              // v3
-                       1, -1, -1, 1, 0, 0, 0, 0, 1,              // v4
-                       1, 1, -1, 1, 0, 0, 0, 1, 1,              // v5
-
-                       1, 1, 1, 0, 1, 0, 1, 1, 1,              // v0 (top)
-                       1, 1, -1, 0, 1, 0, 0, 1, 1,              // v5
-                       -1, 1, -1, 0, 1, 0, 0, 1, 0,              // v6
-                       -1, 1, 1, 0, 1, 0, 1, 1, 0,              // v1
-
-                       -1, 1, 1, -1, 0, 0, 1, 1, 0,              // v1 (left)
-                       -1, 1, -1, -1, 0, 0, 0, 1, 0,              // v6
-                       -1, -1, -1, -1, 0, 0, 0, 0, 0,              // v7
-                       -1, -1, 1, -1, 0, 0, 1, 0, 0,              // v2
-
-                       -1, -1, -1, 0, -1, 0, 0, 0, 0,              // v7 (bottom)
-                       1, -1, -1, 0, -1, 0, 0, 0, 1,              // v4
-                       1, -1, 1, 0, -1, 0, 1, 0, 1,              // v3
-                       -1, -1, 1, 0, -1, 0, 1, 0, 0,              // v2
-
-                       1, -1, -1, 0, 0, -1, 0, 0, 1,              // v4 (back)
-                       -1, -1, -1, 0, 0, -1, 0, 0, 0,              // v7
-                       -1, 1, -1, 0, 0, -1, 0, 1, 0,              // v6
-                       1, 1, -1, 0, 0, -1, 0, 1, 1};            // v5
-
-///////////////////////////////////////////////////////////////////////////////
-// draw cube at bottom-left corner with glDrawElements and interleave array
-// All the vertex data (position, normal, colour) can be placed together into a
-// single array, and be interleaved like (VNCVNC...). The interleave vertex data
-// provides better memory locality.
-// Since we are using a single interleaved vertex array to store vertex
-// positions, normals and colours, we need to specify "stride" and "pointer"
-// parameters properly for glVertexPointer, glNormalPointer and glColorPointer.
-// Each vertex has 9 elements of floats (3 position + 3 normal + 3 color), so,
-// the stride param should be 36 (= 9 * 4 bytes).
-///////////////////////////////////////////////////////////////////////////////
-void draw5() {
-    // enable and specify pointers to vertex arrays
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glNormalPointer(GL_FLOAT, 9 * sizeof(GLfloat), vertices3 + 3);
-    glColorPointer(3, GL_FLOAT, 9 * sizeof(GLfloat), vertices3 + 6);
-    glVertexPointer(3, GL_FLOAT, 9 * sizeof(GLfloat), vertices3);
-
-    glPushMatrix();
-    glTranslatef(-2, -2, 0);                // move to bottom-left
-
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
-
-    glPopMatrix();
-
-    glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize lights
@@ -288,7 +217,8 @@ void render() {
     glRotatef(0.0f, 0, 1, 0);   // heading
 
     // with glDrawElements() with interleave vertex array
-    draw5();
+    draw_cube(-2, -2, 0);
+    draw_cube(0, 0, 0);
 
     // print 2D text
     float pos[4] = {-4.0f, 3.5f, 0, 1};

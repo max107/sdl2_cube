@@ -4,7 +4,10 @@ project(sdl2_cube)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES
+        opengl_utils.h
+        main.cpp
+        cube.h)
 
 add_executable(sdl2_cube ${SOURCE_FILES})
 
