@@ -28,7 +28,8 @@ void draw_text(TTF_Font *font) {
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surfaceMessage->w, surfaceMessage->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, surfaceMessage->pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surfaceMessage->w, surfaceMessage->h, 0, GL_BGRA, GL_UNSIGNED_BYTE,
+                 surfaceMessage->pixels);
     glBindTexture(GL_TEXTURE_2D, 0);
     SDL_FreeSurface(surfaceMessage);
 
@@ -37,13 +38,14 @@ void draw_text(TTF_Font *font) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
-    glBegin(GL_TRIANGLE_STRIP);
-    //texcoord; position;
-    glVertexAttrib2f(1, 0, 1); glVertexAttrib2f(0, -1, -1); //top left
-    glVertexAttrib2f(1, 1, 1); glVertexAttrib2f(0, +1, -1); //top right
-    glVertexAttrib2f(1, 0, 0); glVertexAttrib2f(0, -1, +1); //bottom left
-    glVertexAttrib2f(1, 1, 0); glVertexAttrib2f(0, +1, +1); //bottom right
-    glEnd();
+    const GLfloat quadVertices[] = { -1.0f, 1.0f, 0.0f,
+                                     1.0f, 1.0f, 0.0f,
+                                     1.0f,-1.0f, 0.0f,
+                                     -1.0f,-1.0f, 0.0f
+    };
+
+    glVertexPointer(3, GL_FLOAT, 0, quadVertices);
+    glDrawArrays(GL_QUADS, 0, 4);
 
     glDisable(GL_TEXTURE_2D);
     // TTF_CloseFont(font);

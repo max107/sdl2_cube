@@ -165,6 +165,50 @@ void drawString3D(const char *str, float pos[3], float color[4], void *font) {
 int maxVertices;
 int maxIndices;
 
+void RenderText(const char * message, SDL_Color color, int x, int y) {
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);     // need to disable lighting for proper text color
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    SDL_Surface *sFont = TTF_RenderText_Blended(font, message, color);
+//    TODO unicode support
+//    Uint16 text[] = { '2', L's', L'Г¤' };
+//    SDL_Surface *sFont = TTF_RenderUNICODE_Solid(font, text, color);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sFont->w, sFont->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, sFont->pixels);
+
+    glTranslatef(x, y, 0);
+    //Draw the OpenGL texture as a Quad
+    glBegin(GL_QUADS);
+    {
+        glTexCoord2d(0, 1);
+        glVertex3f(0, 0, 0);
+        glTexCoord2d(1, 1);
+        glVertex3f(0 + sFont->w, 0, 0);
+        glTexCoord2d(1, 0);
+        glVertex3f(0 + sFont->w, 0 + sFont->h, 0);
+        glTexCoord2d(0, 0);
+        glVertex3f(0, 0 + sFont->h, 0);
+    }
+    glEnd();
+
+    glDisable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);     // need to disable lighting for proper text color
+
+    glDeleteTextures(1, &texture);
+    SDL_FreeSurface(sFont);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // display info messages
 ///////////////////////////////////////////////////////////////////////////////
@@ -179,11 +223,13 @@ void showInfo() {
     glLoadIdentity();                   // reset projection matrix
     glOrtho(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT, -1, 1); // set to orthogonal projection
 
-    float color[4] = {1, 1, 1, 1};
+//    float color[4] = {1, 1, 1, 1};
+//    draw_text(font);
 
-//    glColor3f(255.0f, 255.0f, 255.0f);
-//    glTranslatef(10, 10, 0.0f);
-    draw_text(font);
+    // Prints out "Hello World" at location (5,10) at font size 12!
+    SDL_Color color = {255, 255, 255, 0}; // Red
+    // TODO fix inverted positions
+    RenderText("Hello World", color, 10, SCREEN_HEIGHT - 30);
 
     /*
     stringstream ss;
@@ -314,7 +360,7 @@ int main(int argc, char *argv[]) {
     }
 
     //this opens a font style and sets a size
-    font = TTF_OpenFont("Ubuntu-R.ttf", 16);
+    font = TTF_OpenFont("../font.ttf", 16);
     // Error check
     if (font == nullptr) {
         std::cout << " Failed to load font : " << SDL_GetError() << std::endl;
@@ -374,6 +420,8 @@ int main(int argc, char *argv[]) {
     SDL_DelEventWatch(watch, NULL);
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_Quit();
     exit(0);
 }
