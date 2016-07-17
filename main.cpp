@@ -7,6 +7,7 @@
 #include <iomanip>
 
 #include "World.h"
+#include "Framelimit.h"
 
 using std::stringstream;
 using std::cout;
@@ -16,8 +17,8 @@ using std::ends;
 // global variables
 //void *font = GLUT_BITMAP_8_BY_13;
 
-const int SCREEN_WIDTH = 400;
-const int SCREEN_HEIGHT = 300;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 600;
 const float CAMERA_DISTANCE = 10.0f;
 const int TEXT_WIDTH = 8;
 const int TEXT_HEIGHT = 13;
@@ -381,6 +382,8 @@ int main(int argc, char *argv[]) {
     glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
     glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &maxIndices);
 
+    FpsManager *fps = new FpsManager(60);
+
     world = new World(1);
 
     while (!quitting) {
@@ -414,7 +417,20 @@ int main(int argc, char *argv[]) {
 
         update();
         render();
-        SDL_Delay(2);
+
+        // SDL_Delay(2);
+        if (fps->limit()) {
+            char display_text[128];
+            sprintf(display_text, "FPS: %i/%i fps - %ims %ims %fms",
+                    fps->getFps(), 60, fps->getFrameMin(), fps->getFrameMax(),
+                    fps->getFrameAverage());
+            SDL_SetWindowTitle(window, display_text);
+
+            /*
+            printf("FPS:%i/%i fps - Min: %ims Max: %ims Average: %fms \n",
+                    fps->getFps(), settings.max_fps, fps->getFrameMin(), fps->getFrameMax(), fps->getFrameAverage());
+                    */
+        }
     }
 
     SDL_DelEventWatch(watch, NULL);

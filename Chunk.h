@@ -5,6 +5,8 @@
 #ifndef SDL2_CUBE_CHUNK_H
 #define SDL2_CUBE_CHUNK_H
 
+#include <iostream>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_opengl.h>
 #include <glm/glm.hpp>
 
@@ -12,11 +14,9 @@
 
 class Chunk {
 public:
-    Chunk(int seed);
+    Chunk(FastNoise *noise);
 
     void render();
-
-    void setSeed(int seed);
 
 protected:
     // index array of vertex array for glDrawElements() & glDrawRangeElement()
@@ -66,11 +66,14 @@ protected:
     };
 
 private:
-    static const int CHUNK_SIZE = 16;
+    GLuint texture = 0;
+    GLuint loadTexture(std::string path);
 
-    float data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+    static const int BLOCK_SIZE = 2;
+    static const int CHUNK_SIZE = 32;
+    static const int CHUNK_DEPTH = 16;
 
-    int _seed;
+    float data[CHUNK_SIZE][CHUNK_SIZE][CHUNK_DEPTH];
 
     glm::vec3 toGlobalCoordinates(int x, int y, int z);
 

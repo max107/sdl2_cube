@@ -5,10 +5,11 @@ project(sdl2_cube)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
+        Framelimit.h
         Chunk.cpp Chunk.h
         World.cpp World.h
         main.cpp
-        )
+        Frustum.cpp Frustum.h)
 
 add_executable(sdl2_cube ${SOURCE_FILES})
 
