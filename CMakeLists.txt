@@ -5,10 +5,10 @@ project(sdl2_cube)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
-        utils.h
-        opengl_utils.h
+        Chunk.cpp Chunk.h
+        World.cpp World.h
         main.cpp
-        cube.h)
+        )
 
 add_executable(sdl2_cube ${SOURCE_FILES})
 
@@ -33,3 +33,10 @@ if (GLEW_FOUND)
     include_directories($(GLEW_INCLUDE_DIRS))
     target_link_libraries(${EXECUTABLE_NAME} ${GLEW_LIBRARIES})
 endif ()
+
+include_directories(deps/FastNoise)
+add_library(FastNoise STATIC
+        deps/FastNoise/FastNoise.cpp
+        deps/FastNoise/FastNoise.h
+        )
+target_link_libraries(${EXECUTABLE_NAME} FastNoise)

@@ -6,9 +6,7 @@
 #include <sstream>
 #include <iomanip>
 
-#include "opengl_utils.h"
-#include "cube.h"
-#include "utils.h"
+#include "World.h"
 
 using std::stringstream;
 using std::cout;
@@ -32,6 +30,8 @@ static bool quitting = false;
 static TTF_Font *font;
 static SDL_Window *window = NULL;
 static SDL_GLContext gl_context;
+
+static World *world;
 
 ///////////////////////////////////////////////////////////////////////////////
 // initialize lights
@@ -165,7 +165,7 @@ void drawString3D(const char *str, float pos[3], float color[4], void *font) {
 int maxVertices;
 int maxIndices;
 
-void RenderText(const char * message, SDL_Color color, int x, int y) {
+void RenderText(const char *message, SDL_Color color, int x, int y) {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_LIGHTING);     // need to disable lighting for proper text color
     glEnable(GL_TEXTURE_2D);
@@ -284,9 +284,7 @@ void render() {
     glRotatef(0.0f, 1, 0, 0);   // pitch
     glRotatef(0.0f, 0, 1, 0);   // heading
 
-    // with glDrawElements() with interleave vertex array
-    draw_cube(-2, -2, 0);
-    draw_cube(0, 0, 0);
+    world->render();
 
     // print 2D text
     /*
@@ -382,6 +380,8 @@ int main(int argc, char *argv[]) {
     // The constants are defined in glext.h
     glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
     glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &maxIndices);
+
+    world = new World(1);
 
     while (!quitting) {
         SDL_Event event;
