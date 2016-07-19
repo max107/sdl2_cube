@@ -25,7 +25,7 @@ const int TEXT_HEIGHT = 13;
 
 float cameraAngleX = 0.f;
 float cameraAngleY = 0.f;
-float cameraDistance = 10.0f;
+float cameraDistance = 5.0f;
 
 static bool quitting = false;
 static TTF_Font *font;

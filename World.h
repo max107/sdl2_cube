@@ -7,12 +7,11 @@
 
 #include <vector>
 #include "Chunk.h"
+#include <octree.h>
 
 class World {
 public:
     World(int seed);
-
-    void setSeed(int seed);
 
     void render();
 

@@ -5,7 +5,9 @@ project(sdl2_cube)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
+		utils.h
         Framelimit.h
+		Cube.cpp Cube.h
         Chunk.cpp Chunk.h
         World.cpp World.h
         main.cpp
@@ -36,8 +38,7 @@ if (GLEW_FOUND)
 endif ()
 
 include_directories(deps/FastNoise)
-add_library(FastNoise STATIC
-        deps/FastNoise/FastNoise.cpp
-        deps/FastNoise/FastNoise.h
-        )
+add_library(FastNoise STATIC deps/FastNoise/FastNoise.cpp deps/FastNoise/FastNoise.h)
 target_link_libraries(${EXECUTABLE_NAME} FastNoise)
+
+include_directories(deps/octree)
